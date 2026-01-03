@@ -1,0 +1,223 @@
+{% extends "base.html" %}
+
+{% block title %}Upload Document - Document Ingestion{% endblock %}
+
+{% block content %}
+<div class="mb-8">
+    <h1 class="text-3xl font-bold text-gray-800 mb-2">Upload Document</h1>
+    <p class="text-gray-600">Upload documents for OCR processing and classification</p>
+</div>
+
+<div class="max-w-3xl mx-auto">
+    <!-- Upload Card -->
+    <div class="card mb-6">
+        <div id="drop-zone" class="border-2 border-dashed border-gray-300 rounded-lg p-12 text-center hover:border-indigo-500 transition cursor-pointer">
+            <div id="drop-zone-content">
+                <i class="fas fa-cloud-upload-alt text-6xl text-gray-400 mb-4"></i>
+                <p class="text-lg font-medium text-gray-700 mb-2">Drag & Drop your document here</p>
+                <p class="text-sm text-gray-500 mb-4">or</p>
+                <label for="file-input" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-lg font-medium cursor-pointer inline-block transition">
+                    <i class="fas fa-folder-open mr-2"></i>Browse Files
+                </label>
+                <input type="file" id="file-input" accept=".png,.jpg,.jpeg,.pdf,.tif,.tiff" class="hidden">
+                <p class="text-xs text-gray-500 mt-4">Supported formats: PNG, JPG, PDF, TIFF (Max 10MB)</p>
+            </div>
+            
+            <div id="upload-progress" class="hidden">
+                <i class="fas fa-spinner fa-spin text-4xl text-indigo-600 mb-4"></i>
+                <p class="text-lg font-medium text-gray-700">Uploading...</p>
+                <div class="w-full bg-gray-200 rounded-full h-2 mt-4">
+                    <div id="progress-bar" class="bg-indigo-600 h-2 rounded-full transition-all" style="width: 0%"></div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Selected File Preview -->
+        <div id="file-preview" class="hidden mt-6 p-4 bg-gray-50 rounded-lg">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <i class="fas fa-file-alt text-2xl text-gray-400"></i>
+                    <div>
+                        <p id="preview-filename" class="font-medium text-gray-800"></p>
+                        <p id="preview-filesize" class="text-sm text-gray-500"></p>
+                    </div>
+                </div>
+                <button onclick="clearFile()" class="text-red-600 hover:text-red-800">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Upload Button -->
+    <div class="text-center mb-6">
+        <button id="upload-btn" onclick="uploadFile()" disabled class="bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-3 rounded-lg font-medium transition disabled:bg-gray-400 disabled:cursor-not-allowed">
+            <i class="fas fa-upload mr-2"></i>Upload & Process
+        </button>
+    </div>
+    
+    <!-- Success/Error Messages -->
+    <div id="message-container"></div>
+    
+    <!-- Upload Tips -->
+    <div class="card">
+        <h3 class="text-lg font-semibold text-gray-800 mb-4">
+            <i class="fas fa-lightbulb text-yellow-500 mr-2"></i>Tips for Best Results
+        </h3>
+        <ul class="space-y-2 text-sm text-gray-600">
+            <li><i class="fas fa-check text-green-500 mr-2"></i>Ensure documents are clear and legible</li>
+            <li><i class="fas fa-check text-green-500 mr-2"></i>Avoid blurry or low-resolution images</li>
+            <li><i class="fas fa-check text-green-500 mr-2"></i>Straighten skewed documents before uploading</li>
+            <li><i class="fas fa-check text-green-500 mr-2"></i>Remove any watermarks or overlays if possible</li>
+            <li><i class="fas fa-check text-green-500 mr-2"></i>Supported formats: PNG, JPEG, PDF, TIFF</li>
+        </ul>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    let selectedFile = null;
+    
+    const dropZone = document.getElementById('drop-zone');
+    const fileInput = document.getElementById('file-input');
+    const uploadBtn = document.getElementById('upload-btn');
+    const filePreview = document.getElementById('file-preview');
+    const dropZoneContent = document.getElementById('drop-zone-content');
+    const uploadProgress = document.getElementById('upload-progress');
+    
+    // Drag and drop handlers
+    dropZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dropZone.classList.add('border-indigo-500', 'bg-indigo-50');
+    });
+    
+    dropZone.addEventListener('dragleave', (e) => {
+        e.preventDefault();
+        dropZone.classList.remove('border-indigo-500', 'bg-indigo-50');
+    });
+    
+    dropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropZone.classList.remove('border-indigo-500', 'bg-indigo-50');
+        
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+            handleFileSelect(files[0]);
+        }
+    });
+    
+    // File input handler
+    fileInput.addEventListener('change', (e) => {
+        if (e.target.files.length > 0) {
+            handleFileSelect(e.target.files[0]);
+        }
+    });
+    
+    // Handle file selection
+    function handleFileSelect(file) {
+        // Validate file type
+        const allowedTypes = ['image/png', 'image/jpeg', 'image/jpg', 'application/pdf', 'image/tiff'];
+        if (!allowedTypes.includes(file.type)) {
+            showMessage('error', 'Invalid file type. Please upload PNG, JPEG, PDF, or TIFF files.');
+            return;
+        }
+        
+        // Validate file size (10MB)
+        if (file.size > 10 * 1024 * 1024) {
+            showMessage('error', 'File size exceeds 10MB limit.');
+            return;
+        }
+        
+        selectedFile = file;
+        
+        // Show file preview
+        document.getElementById('preview-filename').textContent = file.name;
+        document.getElementById('preview-filesize').textContent = formatFileSize(file.size);
+        filePreview.classList.remove('hidden');
+        
+        // Enable upload button
+        uploadBtn.disabled = false;
+    }
+    
+    // Clear file selection
+    function clearFile() {
+        selectedFile = null;
+        fileInput.value = '';
+        filePreview.classList.add('hidden');
+        uploadBtn.disabled = true;
+    }
+    
+    // Upload file
+    async function uploadFile() {
+        if (!selectedFile) return;
+        
+        // Show progress
+        dropZoneContent.classList.add('hidden');
+        uploadProgress.classList.remove('hidden');
+        uploadBtn.disabled = true;
+        
+        const formData = new FormData();
+        formData.append('file', selectedFile);
+        
+        try {
+            const response = await fetch('/api/v1/documents/upload', {
+                method: 'POST',
+                body: formData
+            });
+            
+            const data = await response.json();
+            
+            if (response.ok) {
+                showMessage('success', `Document uploaded successfully! Job ID: ${data.job_id}`);
+                setTimeout(() => {
+                    window.location.href = `/documents/${data.job_id}`;
+                }, 2000);
+            } else {
+                showMessage('error', data.detail || 'Upload failed');
+                resetUploadForm();
+            }
+        } catch (error) {
+            console.error('Upload error:', error);
+            showMessage('error', 'Network error. Please try again.');
+            resetUploadForm();
+        }
+    }
+    
+    // Reset form
+    function resetUploadForm() {
+        dropZoneContent.classList.remove('hidden');
+        uploadProgress.classList.add('hidden');
+        clearFile();
+    }
+    
+    // Show message
+    function showMessage(type, message) {
+        const container = document.getElementById('message-container');
+        const bgColor = type === 'success' ? 'bg-green-100 text-green-800 border-green-300' : 'bg-red-100 text-red-800 border-red-300';
+        const icon = type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle';
+        
+        container.innerHTML = `
+            <div class="border-l-4 p-4 ${bgColor} rounded-lg mb-4">
+                <div class="flex items-center">
+                    <i class="fas ${icon} text-xl mr-3"></i>
+                    <p class="font-medium">${message}</p>
+                </div>
+            </div>
+        `;
+        
+        setTimeout(() => {
+            container.innerHTML = '';
+        }, 5000);
+    }
+    
+    // Format file size
+    function formatFileSize(bytes) {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+    }
+</script>
+{% endblock %}

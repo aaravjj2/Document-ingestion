@@ -1,0 +1,641 @@
+<!DOCTYPE html><html lang="en"><head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Documents - Document Ingestion</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .status-badge {
+            @apply px-3 py-1 rounded-full text-xs font-semibold;
+        }
+        .status-pending { @apply bg-yellow-100 text-yellow-800; }
+        .status-processing { @apply bg-blue-100 text-blue-800; }
+        .status-completed { @apply bg-green-100 text-green-800; }
+        .status-failed { @apply bg-red-100 text-red-800; }
+        .card {
+            @apply bg-white rounded-lg shadow-md p-6;
+        }
+    </style>
+<style>*, ::before, ::after{--tw-border-spacing-x:0;--tw-border-spacing-y:0;--tw-translate-x:0;--tw-translate-y:0;--tw-rotate:0;--tw-skew-x:0;--tw-skew-y:0;--tw-scale-x:1;--tw-scale-y:1;--tw-pan-x: ;--tw-pan-y: ;--tw-pinch-zoom: ;--tw-scroll-snap-strictness:proximity;--tw-gradient-from-position: ;--tw-gradient-via-position: ;--tw-gradient-to-position: ;--tw-ordinal: ;--tw-slashed-zero: ;--tw-numeric-figure: ;--tw-numeric-spacing: ;--tw-numeric-fraction: ;--tw-ring-inset: ;--tw-ring-offset-width:0px;--tw-ring-offset-color:#fff;--tw-ring-color:rgb(59 130 246 / 0.5);--tw-ring-offset-shadow:0 0 #0000;--tw-ring-shadow:0 0 #0000;--tw-shadow:0 0 #0000;--tw-shadow-colored:0 0 #0000;--tw-blur: ;--tw-brightness: ;--tw-contrast: ;--tw-grayscale: ;--tw-hue-rotate: ;--tw-invert: ;--tw-saturate: ;--tw-sepia: ;--tw-drop-shadow: ;--tw-backdrop-blur: ;--tw-backdrop-brightness: ;--tw-backdrop-contrast: ;--tw-backdrop-grayscale: ;--tw-backdrop-hue-rotate: ;--tw-backdrop-invert: ;--tw-backdrop-opacity: ;--tw-backdrop-saturate: ;--tw-backdrop-sepia: ;--tw-contain-size: ;--tw-contain-layout: ;--tw-contain-paint: ;--tw-contain-style: }::backdrop{--tw-border-spacing-x:0;--tw-border-spacing-y:0;--tw-translate-x:0;--tw-translate-y:0;--tw-rotate:0;--tw-skew-x:0;--tw-skew-y:0;--tw-scale-x:1;--tw-scale-y:1;--tw-pan-x: ;--tw-pan-y: ;--tw-pinch-zoom: ;--tw-scroll-snap-strictness:proximity;--tw-gradient-from-position: ;--tw-gradient-via-position: ;--tw-gradient-to-position: ;--tw-ordinal: ;--tw-slashed-zero: ;--tw-numeric-figure: ;--tw-numeric-spacing: ;--tw-numeric-fraction: ;--tw-ring-inset: ;--tw-ring-offset-width:0px;--tw-ring-offset-color:#fff;--tw-ring-color:rgb(59 130 246 / 0.5);--tw-ring-offset-shadow:0 0 #0000;--tw-ring-shadow:0 0 #0000;--tw-shadow:0 0 #0000;--tw-shadow-colored:0 0 #0000;--tw-blur: ;--tw-brightness: ;--tw-contrast: ;--tw-grayscale: ;--tw-hue-rotate: ;--tw-invert: ;--tw-saturate: ;--tw-sepia: ;--tw-drop-shadow: ;--tw-backdrop-blur: ;--tw-backdrop-brightness: ;--tw-backdrop-contrast: ;--tw-backdrop-grayscale: ;--tw-backdrop-hue-rotate: ;--tw-backdrop-invert: ;--tw-backdrop-opacity: ;--tw-backdrop-saturate: ;--tw-backdrop-sepia: ;--tw-contain-size: ;--tw-contain-layout: ;--tw-contain-paint: ;--tw-contain-style: }/* ! tailwindcss v3.4.17 | MIT License | https://tailwindcss.com */*,::after,::before{box-sizing:border-box;border-width:0;border-style:solid;border-color:#e5e7eb}::after,::before{--tw-content:''}:host,html{line-height:1.5;-webkit-text-size-adjust:100%;-moz-tab-size:4;tab-size:4;font-family:ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";font-feature-settings:normal;font-variation-settings:normal;-webkit-tap-highlight-color:transparent}body{margin:0;line-height:inherit}hr{height:0;color:inherit;border-top-width:1px}abbr:where([title]){-webkit-text-decoration:underline dotted;text-decoration:underline dotted}h1,h2,h3,h4,h5,h6{font-size:inherit;font-weight:inherit}a{color:inherit;text-decoration:inherit}b,strong{font-weight:bolder}code,kbd,pre,samp{font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;font-feature-settings:normal;font-variation-settings:normal;font-size:1em}small{font-size:80%}sub,sup{font-size:75%;line-height:0;position:relative;vertical-align:baseline}sub{bottom:-.25em}sup{top:-.5em}table{text-indent:0;border-color:inherit;border-collapse:collapse}button,input,optgroup,select,textarea{font-family:inherit;font-feature-settings:inherit;font-variation-settings:inherit;font-size:100%;font-weight:inherit;line-height:inherit;letter-spacing:inherit;color:inherit;margin:0;padding:0}button,select{text-transform:none}button,input:where([type=button]),input:where([type=reset]),input:where([type=submit]){-webkit-appearance:button;background-color:transparent;background-image:none}:-moz-focusring{outline:auto}:-moz-ui-invalid{box-shadow:none}progress{vertical-align:baseline}::-webkit-inner-spin-button,::-webkit-outer-spin-button{height:auto}[type=search]{-webkit-appearance:textfield;outline-offset:-2px}::-webkit-search-decoration{-webkit-appearance:none}::-webkit-file-upload-button{-webkit-appearance:button;font:inherit}summary{display:list-item}blockquote,dd,dl,figure,h1,h2,h3,h4,h5,h6,hr,p,pre{margin:0}fieldset{margin:0;padding:0}legend{padding:0}menu,ol,ul{list-style:none;margin:0;padding:0}dialog{padding:0}textarea{resize:vertical}input::placeholder,textarea::placeholder{opacity:1;color:#9ca3af}[role=button],button{cursor:pointer}:disabled{cursor:default}audio,canvas,embed,iframe,img,object,svg,video{display:block;vertical-align:middle}img,video{max-width:100%;height:auto}[hidden]:where(:not([hidden=until-found])){display:none}.container{width:100%}@media (min-width: 640px){.container{max-width:640px}}@media (min-width: 768px){.container{max-width:768px}}@media (min-width: 1024px){.container{max-width:1024px}}@media (min-width: 1280px){.container{max-width:1280px}}@media (min-width: 1536px){.container{max-width:1536px}}.mx-auto{margin-left:auto;margin-right:auto}.mb-2{margin-bottom:0.5rem}.mb-6{margin-bottom:1.5rem}.mb-8{margin-bottom:2rem}.mr-2{margin-right:0.5rem}.mt-12{margin-top:3rem}.mr-3{margin-right:0.75rem}.block{display:block}.flex{display:flex}.grid{display:grid}.hidden{display:none}.h-16{height:4rem}.w-full{width:100%}.min-w-full{min-width:100%}.grid-cols-1{grid-template-columns:repeat(1, minmax(0, 1fr))}.items-end{align-items:flex-end}.items-center{align-items:center}.justify-between{justify-content:space-between}.gap-4{gap:1rem}.space-x-2 > :not([hidden]) ~ :not([hidden]){--tw-space-x-reverse:0;margin-right:calc(0.5rem * var(--tw-space-x-reverse));margin-left:calc(0.5rem * calc(1 - var(--tw-space-x-reverse)))}.space-x-4 > :not([hidden]) ~ :not([hidden]){--tw-space-x-reverse:0;margin-right:calc(1rem * var(--tw-space-x-reverse));margin-left:calc(1rem * calc(1 - var(--tw-space-x-reverse)))}.space-x-8 > :not([hidden]) ~ :not([hidden]){--tw-space-x-reverse:0;margin-right:calc(2rem * var(--tw-space-x-reverse));margin-left:calc(2rem * calc(1 - var(--tw-space-x-reverse)))}.divide-y > :not([hidden]) ~ :not([hidden]){--tw-divide-y-reverse:0;border-top-width:calc(1px * calc(1 - var(--tw-divide-y-reverse)));border-bottom-width:calc(1px * var(--tw-divide-y-reverse))}.divide-gray-200 > :not([hidden]) ~ :not([hidden]){--tw-divide-opacity:1;border-color:rgb(229 231 235 / var(--tw-divide-opacity, 1))}.overflow-x-auto{overflow-x:auto}.whitespace-nowrap{white-space:nowrap}.rounded{border-radius:0.25rem}.rounded-lg{border-radius:0.5rem}.border{border-width:1px}.border-gray-300{--tw-border-opacity:1;border-color:rgb(209 213 219 / var(--tw-border-opacity, 1))}.bg-gray-50{--tw-bg-opacity:1;background-color:rgb(249 250 251 / var(--tw-bg-opacity, 1))}.bg-gray-600{--tw-bg-opacity:1;background-color:rgb(75 85 99 / var(--tw-bg-opacity, 1))}.bg-gray-800{--tw-bg-opacity:1;background-color:rgb(31 41 55 / var(--tw-bg-opacity, 1))}.bg-indigo-600{--tw-bg-opacity:1;background-color:rgb(79 70 229 / var(--tw-bg-opacity, 1))}.bg-white{--tw-bg-opacity:1;background-color:rgb(255 255 255 / var(--tw-bg-opacity, 1))}.px-3{padding-left:0.75rem;padding-right:0.75rem}.px-4{padding-left:1rem;padding-right:1rem}.px-6{padding-left:1.5rem;padding-right:1.5rem}.py-12{padding-top:3rem;padding-bottom:3rem}.py-2{padding-top:0.5rem;padding-bottom:0.5rem}.py-3{padding-top:0.75rem;padding-bottom:0.75rem}.py-6{padding-top:1.5rem;padding-bottom:1.5rem}.py-8{padding-top:2rem;padding-bottom:2rem}.py-4{padding-top:1rem;padding-bottom:1rem}.text-left{text-align:left}.text-center{text-align:center}.text-2xl{font-size:1.5rem;line-height:2rem}.text-3xl{font-size:1.875rem;line-height:2.25rem}.text-sm{font-size:0.875rem;line-height:1.25rem}.text-xl{font-size:1.25rem;line-height:1.75rem}.text-xs{font-size:0.75rem;line-height:1rem}.font-bold{font-weight:700}.font-medium{font-weight:500}.uppercase{text-transform:uppercase}.tracking-wider{letter-spacing:0.05em}.text-gray-300{--tw-text-opacity:1;color:rgb(209 213 219 / var(--tw-text-opacity, 1))}.text-gray-500{--tw-text-opacity:1;color:rgb(107 114 128 / var(--tw-text-opacity, 1))}.text-gray-600{--tw-text-opacity:1;color:rgb(75 85 99 / var(--tw-text-opacity, 1))}.text-gray-700{--tw-text-opacity:1;color:rgb(55 65 81 / var(--tw-text-opacity, 1))}.text-gray-800{--tw-text-opacity:1;color:rgb(31 41 55 / var(--tw-text-opacity, 1))}.text-white{--tw-text-opacity:1;color:rgb(255 255 255 / var(--tw-text-opacity, 1))}.text-gray-400{--tw-text-opacity:1;color:rgb(156 163 175 / var(--tw-text-opacity, 1))}.text-gray-900{--tw-text-opacity:1;color:rgb(17 24 39 / var(--tw-text-opacity, 1))}.text-indigo-600{--tw-text-opacity:1;color:rgb(79 70 229 / var(--tw-text-opacity, 1))}.text-red-600{--tw-text-opacity:1;color:rgb(220 38 38 / var(--tw-text-opacity, 1))}.shadow-lg{--tw-shadow:0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);--tw-shadow-colored:0 10px 15px -3px var(--tw-shadow-color), 0 4px 6px -4px var(--tw-shadow-color);box-shadow:var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow)}.transition{transition-property:color, background-color, border-color, fill, stroke, opacity, box-shadow, transform, filter, -webkit-text-decoration-color, -webkit-backdrop-filter;transition-property:color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter;transition-property:color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter, -webkit-text-decoration-color, -webkit-backdrop-filter;transition-timing-function:cubic-bezier(0.4, 0, 0.2, 1);transition-duration:150ms}.hover\:bg-gray-700:hover{--tw-bg-opacity:1;background-color:rgb(55 65 81 / var(--tw-bg-opacity, 1))}.hover\:bg-indigo-700:hover{--tw-bg-opacity:1;background-color:rgb(67 56 202 / var(--tw-bg-opacity, 1))}.hover\:bg-gray-50:hover{--tw-bg-opacity:1;background-color:rgb(249 250 251 / var(--tw-bg-opacity, 1))}.hover\:text-indigo-900:hover{--tw-text-opacity:1;color:rgb(49 46 129 / var(--tw-text-opacity, 1))}.hover\:text-red-900:hover{--tw-text-opacity:1;color:rgb(127 29 29 / var(--tw-text-opacity, 1))}.focus\:border-transparent:focus{border-color:transparent}.focus\:ring-2:focus{--tw-ring-offset-shadow:var(--tw-ring-inset) 0 0 0 var(--tw-ring-offset-width) var(--tw-ring-offset-color);--tw-ring-shadow:var(--tw-ring-inset) 0 0 0 calc(2px + var(--tw-ring-offset-width)) var(--tw-ring-color);box-shadow:var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow, 0 0 #0000)}.focus\:ring-indigo-500:focus{--tw-ring-opacity:1;--tw-ring-color:rgb(99 102 241 / var(--tw-ring-opacity, 1))}@media (min-width: 768px){.md\:flex{display:flex}.md\:grid-cols-4{grid-template-columns:repeat(4, minmax(0, 1fr))}}</style></head>
+<body class="bg-gray-50">
+    <!-- Navigation -->
+    <nav class="bg-indigo-600 text-white shadow-lg">
+        <div class="container mx-auto px-4">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center space-x-8">
+                    <a href="/" class="flex items-center space-x-2">
+                        <i class="fas fa-file-alt text-2xl"></i>
+                        <span class="font-bold text-xl">DocIngest</span>
+                    </a>
+                    <div class="hidden md:flex space-x-4">
+                        <a href="/" class="hover:bg-indigo-700 px-3 py-2 rounded transition">
+                            <i class="fas fa-home mr-2"></i>Dashboard
+                        </a>
+                        <a href="/documents" class="hover:bg-indigo-700 px-3 py-2 rounded transition">
+                            <i class="fas fa-folder mr-2"></i>Documents
+                        </a>
+                        <a href="/upload" class="hover:bg-indigo-700 px-3 py-2 rounded transition">
+                            <i class="fas fa-upload mr-2"></i>Upload
+                        </a>
+                        <a href="/health" class="hover:bg-indigo-700 px-3 py-2 rounded transition">
+                            <i class="fas fa-heartbeat mr-2"></i>Health
+                        </a>
+                    </div>
+                </div>
+                <div class="flex items-center">
+                    <a href="/api/v1/docs" target="_blank" class="hover:bg-indigo-700 px-3 py-2 rounded transition text-sm">
+                        <i class="fas fa-book mr-2"></i>API Docs
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="container mx-auto px-4 py-8">
+        
+<div class="mb-8">
+    <div class="flex items-center justify-between">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-800 mb-2">Documents</h1>
+            <p class="text-gray-600">Manage and view all uploaded documents</p>
+        </div>
+        <a href="/upload" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-lg font-medium transition">
+            <i class="fas fa-upload mr-2"></i>Upload Document
+        </a>
+    </div>
+</div>
+
+<!-- Filters -->
+<div class="card mb-6">
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Search</label>
+            <input type="text" id="search-input" placeholder="Search by filename..." class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+        </div>
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Status</label>
+            <select id="status-filter" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                <option value="">All Statuses</option>
+                <option value="pending">Pending</option>
+                <option value="processing">Processing</option>
+                <option value="completed">Completed</option>
+                <option value="failed">Failed</option>
+            </select>
+        </div>
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Type</label>
+            <select id="type-filter" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                <option value="">All Types</option>
+                <option value="invoice">Invoice</option>
+                <option value="receipt">Receipt</option>
+                <option value="unknown">Unknown</option>
+            </select>
+        </div>
+        <div class="flex items-end">
+            <button onclick="applyFilters()" class="w-full bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg font-medium transition">
+                <i class="fas fa-filter mr-2"></i>Apply Filters
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Documents Table -->
+<div class="card">
+    <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Filename</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Uploaded</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Confidence</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                </tr>
+            </thead>
+            <tbody id="documents-table" class="bg-white divide-y divide-gray-200">
+            <tr class="hover:bg-gray-50 transition">
+                <td class="px-6 py-4 whitespace-nowrap">
+                    <div class="flex items-center">
+                        <i class="fas fa-file-alt text-gray-400 mr-3"></i>
+                        <span class="text-sm font-medium text-gray-900">061d5ac3-b39b-4769-a027-bd5a7c8e85b4.png</span>
+                    </div>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                    <span class="text-sm text-gray-600">unknown</span>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                    <span class="status-badge status-pending">pending</span>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                    12/31/2025, 12:50:51 AM
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                    <span class="text-sm text-gray-400">N/A</span>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm">
+                    <a href="/documents/b9e955e0-f228-48e4-91cc-9112fe5bc7aa" class="text-indigo-600 hover:text-indigo-900 mr-3">
+                        <i class="fas fa-eye"></i> View
+                    </a>
+                    <button onclick="deleteDocument('b9e955e0-f228-48e4-91cc-9112fe5bc7aa')" class="text-red-600 hover:text-red-900">
+                        <i class="fas fa-trash"></i> Delete
+                    </button>
+                </td>
+            </tr>
+        
+            <tr class="hover:bg-gray-50 transition">
+                <td class="px-6 py-4 whitespace-nowrap">
+                    <div class="flex items-center">
+                        <i class="fas fa-file-alt text-gray-400 mr-3"></i>
+                        <span class="text-sm font-medium text-gray-900">d1414ccd-311f-4410-93d9-6d0617a5ae9b.pdf</span>
+                    </div>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                    <span class="text-sm text-gray-600">unknown</span>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                    <span class="status-badge status-pending">pending</span>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                    12/31/2025, 12:50:51 AM
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                    <span class="text-sm text-gray-400">N/A</span>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm">
+                    <a href="/documents/0221936b-0108-4662-a605-fbfa74f9c600" class="text-indigo-600 hover:text-indigo-900 mr-3">
+                        <i class="fas fa-eye"></i> View
+                    </a>
+                    <button onclick="deleteDocument('0221936b-0108-4662-a605-fbfa74f9c600')" class="text-red-600 hover:text-red-900">
+                        <i class="fas fa-trash"></i> Delete
+                    </button>
+                </td>
+            </tr>
+        
+            <tr class="hover:bg-gray-50 transition">
+                <td class="px-6 py-4 whitespace-nowrap">
+                    <div class="flex items-center">
+                        <i class="fas fa-file-alt text-gray-400 mr-3"></i>
+                        <span class="text-sm font-medium text-gray-900">81d8e17f-94e7-463c-ac7f-4e5ba58a6186.png</span>
+                    </div>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                    <span class="text-sm text-gray-600">unknown</span>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                    <span class="status-badge status-pending">pending</span>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                    12/31/2025, 12:47:53 AM
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                    <span class="text-sm text-gray-400">N/A</span>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm">
+                    <a href="/documents/4acb4bcc-83e4-4dd0-90bf-911d3a8d7d17" class="text-indigo-600 hover:text-indigo-900 mr-3">
+                        <i class="fas fa-eye"></i> View
+                    </a>
+                    <button onclick="deleteDocument('4acb4bcc-83e4-4dd0-90bf-911d3a8d7d17')" class="text-red-600 hover:text-red-900">
+                        <i class="fas fa-trash"></i> Delete
+                    </button>
+                </td>
+            </tr>
+        
+            <tr class="hover:bg-gray-50 transition">
+                <td class="px-6 py-4 whitespace-nowrap">
+                    <div class="flex items-center">
+                        <i class="fas fa-file-alt text-gray-400 mr-3"></i>
+                        <span class="text-sm font-medium text-gray-900">7749230a-dc30-4fed-a8a9-214b6340d2c0.pdf</span>
+                    </div>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                    <span class="text-sm text-gray-600">unknown</span>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                    <span class="status-badge status-pending">pending</span>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                    12/31/2025, 12:47:52 AM
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                    <span class="text-sm text-gray-400">N/A</span>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm">
+                    <a href="/documents/dee782c6-2ab3-4a81-9b45-aea752230f57" class="text-indigo-600 hover:text-indigo-900 mr-3">
+                        <i class="fas fa-eye"></i> View
+                    </a>
+                    <button onclick="deleteDocument('dee782c6-2ab3-4a81-9b45-aea752230f57')" class="text-red-600 hover:text-red-900">
+                        <i class="fas fa-trash"></i> Delete
+                    </button>
+                </td>
+            </tr>
+        
+            <tr class="hover:bg-gray-50 transition">
+                <td class="px-6 py-4 whitespace-nowrap">
+                    <div class="flex items-center">
+                        <i class="fas fa-file-alt text-gray-400 mr-3"></i>
+                        <span class="text-sm font-medium text-gray-900">ad15e666-128c-4331-9295-eeeb25080340.pdf</span>
+                    </div>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                    <span class="text-sm text-gray-600">unknown</span>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                    <span class="status-badge status-pending">pending</span>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                    12/31/2025, 12:30:51 AM
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                    <span class="text-sm text-gray-400">N/A</span>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm">
+                    <a href="/documents/daea8ad1-fbad-47b5-9f32-1415399f07e1" class="text-indigo-600 hover:text-indigo-900 mr-3">
+                        <i class="fas fa-eye"></i> View
+                    </a>
+                    <button onclick="deleteDocument('daea8ad1-fbad-47b5-9f32-1415399f07e1')" class="text-red-600 hover:text-red-900">
+                        <i class="fas fa-trash"></i> Delete
+                    </button>
+                </td>
+            </tr>
+        
+            <tr class="hover:bg-gray-50 transition">
+                <td class="px-6 py-4 whitespace-nowrap">
+                    <div class="flex items-center">
+                        <i class="fas fa-file-alt text-gray-400 mr-3"></i>
+                        <span class="text-sm font-medium text-gray-900">a3f8fe3f-7dc9-4482-9c5f-ffea39c086ab.pdf</span>
+                    </div>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                    <span class="text-sm text-gray-600">unknown</span>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                    <span class="status-badge status-pending">pending</span>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                    12/31/2025, 12:20:54 AM
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                    <span class="text-sm text-gray-400">N/A</span>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm">
+                    <a href="/documents/1b76728d-0408-4eae-8d4a-fd2ebfdfbe0a" class="text-indigo-600 hover:text-indigo-900 mr-3">
+                        <i class="fas fa-eye"></i> View
+                    </a>
+                    <button onclick="deleteDocument('1b76728d-0408-4eae-8d4a-fd2ebfdfbe0a')" class="text-red-600 hover:text-red-900">
+                        <i class="fas fa-trash"></i> Delete
+                    </button>
+                </td>
+            </tr>
+        
+            <tr class="hover:bg-gray-50 transition">
+                <td class="px-6 py-4 whitespace-nowrap">
+                    <div class="flex items-center">
+                        <i class="fas fa-file-alt text-gray-400 mr-3"></i>
+                        <span class="text-sm font-medium text-gray-900">5c7c7251-015a-433c-aeea-0b514166c281.jpeg</span>
+                    </div>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                    <span class="text-sm text-gray-600">unknown</span>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                    <span class="status-badge status-pending">pending</span>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                    12/30/2025, 10:55:43 PM
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                    <span class="text-sm text-gray-400">N/A</span>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm">
+                    <a href="/documents/efb47ef5-def5-48d3-96d5-d4c31d3ba202" class="text-indigo-600 hover:text-indigo-900 mr-3">
+                        <i class="fas fa-eye"></i> View
+                    </a>
+                    <button onclick="deleteDocument('efb47ef5-def5-48d3-96d5-d4c31d3ba202')" class="text-red-600 hover:text-red-900">
+                        <i class="fas fa-trash"></i> Delete
+                    </button>
+                </td>
+            </tr>
+        
+            <tr class="hover:bg-gray-50 transition">
+                <td class="px-6 py-4 whitespace-nowrap">
+                    <div class="flex items-center">
+                        <i class="fas fa-file-alt text-gray-400 mr-3"></i>
+                        <span class="text-sm font-medium text-gray-900">64241b66-0622-4922-83f1-cca84c9284a8.png</span>
+                    </div>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                    <span class="text-sm text-gray-600">unknown</span>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                    <span class="status-badge status-pending">pending</span>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                    12/30/2025, 10:28:47 PM
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                    <span class="text-sm text-gray-400">N/A</span>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm">
+                    <a href="/documents/b5af3065-5283-4d9d-b7ed-0505559925d5" class="text-indigo-600 hover:text-indigo-900 mr-3">
+                        <i class="fas fa-eye"></i> View
+                    </a>
+                    <button onclick="deleteDocument('b5af3065-5283-4d9d-b7ed-0505559925d5')" class="text-red-600 hover:text-red-900">
+                        <i class="fas fa-trash"></i> Delete
+                    </button>
+                </td>
+            </tr>
+        
+            <tr class="hover:bg-gray-50 transition">
+                <td class="px-6 py-4 whitespace-nowrap">
+                    <div class="flex items-center">
+                        <i class="fas fa-file-alt text-gray-400 mr-3"></i>
+                        <span class="text-sm font-medium text-gray-900">e8511406-c783-427e-9a48-ad36b0ec76c6.pdf</span>
+                    </div>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                    <span class="text-sm text-gray-600">unknown</span>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                    <span class="status-badge status-pending">pending</span>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                    12/30/2025, 10:28:44 PM
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                    <span class="text-sm text-gray-400">N/A</span>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm">
+                    <a href="/documents/fbbdf16c-98a1-4e22-a869-b6fc5d0732d5" class="text-indigo-600 hover:text-indigo-900 mr-3">
+                        <i class="fas fa-eye"></i> View
+                    </a>
+                    <button onclick="deleteDocument('fbbdf16c-98a1-4e22-a869-b6fc5d0732d5')" class="text-red-600 hover:text-red-900">
+                        <i class="fas fa-trash"></i> Delete
+                    </button>
+                </td>
+            </tr>
+        
+            <tr class="hover:bg-gray-50 transition">
+                <td class="px-6 py-4 whitespace-nowrap">
+                    <div class="flex items-center">
+                        <i class="fas fa-file-alt text-gray-400 mr-3"></i>
+                        <span class="text-sm font-medium text-gray-900">6f69403b-b1a4-46af-8ca2-35b32ef915ae.png</span>
+                    </div>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                    <span class="text-sm text-gray-600">unknown</span>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                    <span class="status-badge status-pending">pending</span>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                    12/30/2025, 10:28:41 PM
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                    <span class="text-sm text-gray-400">N/A</span>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm">
+                    <a href="/documents/002b2235-4810-4476-8521-e53e018bcca3" class="text-indigo-600 hover:text-indigo-900 mr-3">
+                        <i class="fas fa-eye"></i> View
+                    </a>
+                    <button onclick="deleteDocument('002b2235-4810-4476-8521-e53e018bcca3')" class="text-red-600 hover:text-red-900">
+                        <i class="fas fa-trash"></i> Delete
+                    </button>
+                </td>
+            </tr>
+        
+            <tr class="hover:bg-gray-50 transition">
+                <td class="px-6 py-4 whitespace-nowrap">
+                    <div class="flex items-center">
+                        <i class="fas fa-file-alt text-gray-400 mr-3"></i>
+                        <span class="text-sm font-medium text-gray-900">5e40083b-1505-4471-9489-38e5711fd833.png</span>
+                    </div>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                    <span class="text-sm text-gray-600">unknown</span>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                    <span class="status-badge status-pending">pending</span>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                    12/30/2025, 10:28:26 PM
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                    <span class="text-sm text-gray-400">N/A</span>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm">
+                    <a href="/documents/230e3f03-9bcc-454e-901a-8fdf07839b6a" class="text-indigo-600 hover:text-indigo-900 mr-3">
+                        <i class="fas fa-eye"></i> View
+                    </a>
+                    <button onclick="deleteDocument('230e3f03-9bcc-454e-901a-8fdf07839b6a')" class="text-red-600 hover:text-red-900">
+                        <i class="fas fa-trash"></i> Delete
+                    </button>
+                </td>
+            </tr>
+        
+            <tr class="hover:bg-gray-50 transition">
+                <td class="px-6 py-4 whitespace-nowrap">
+                    <div class="flex items-center">
+                        <i class="fas fa-file-alt text-gray-400 mr-3"></i>
+                        <span class="text-sm font-medium text-gray-900">e971c15c-72f0-4b27-83af-562f8f601f6f.pdf</span>
+                    </div>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                    <span class="text-sm text-gray-600">unknown</span>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                    <span class="status-badge status-pending">pending</span>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                    12/30/2025, 10:28:26 PM
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                    <span class="text-sm text-gray-400">N/A</span>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm">
+                    <a href="/documents/435acad2-bcef-422f-9d10-058b4a2b85a6" class="text-indigo-600 hover:text-indigo-900 mr-3">
+                        <i class="fas fa-eye"></i> View
+                    </a>
+                    <button onclick="deleteDocument('435acad2-bcef-422f-9d10-058b4a2b85a6')" class="text-red-600 hover:text-red-900">
+                        <i class="fas fa-trash"></i> Delete
+                    </button>
+                </td>
+            </tr>
+        
+            <tr class="hover:bg-gray-50 transition">
+                <td class="px-6 py-4 whitespace-nowrap">
+                    <div class="flex items-center">
+                        <i class="fas fa-file-alt text-gray-400 mr-3"></i>
+                        <span class="text-sm font-medium text-gray-900">2560a046-e4be-4071-ae67-6c89f5ee2281.png</span>
+                    </div>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                    <span class="text-sm text-gray-600">unknown</span>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                    <span class="status-badge status-pending">pending</span>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                    12/30/2025, 10:28:26 PM
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                    <span class="text-sm text-gray-400">N/A</span>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm">
+                    <a href="/documents/e763cc34-7ade-41a7-9e40-bdf88d47b604" class="text-indigo-600 hover:text-indigo-900 mr-3">
+                        <i class="fas fa-eye"></i> View
+                    </a>
+                    <button onclick="deleteDocument('e763cc34-7ade-41a7-9e40-bdf88d47b604')" class="text-red-600 hover:text-red-900">
+                        <i class="fas fa-trash"></i> Delete
+                    </button>
+                </td>
+            </tr>
+        </tbody>
+        </table>
+    </div>
+</div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-gray-300 mt-12">
+        <div class="container mx-auto px-4 py-6 text-center">
+            <p>© 2025 Document Ingestion Service. Built with FastAPI &amp; PaddleOCR.</p>
+        </div>
+    </footer>
+
+    
+<script>
+    let allDocuments = [];
+    
+    async function loadDocuments() {
+        try {
+            const response = await fetch('/api/v1/documents');
+            const data = await response.json();
+            allDocuments = data.documents;
+            renderDocuments(allDocuments);
+        } catch (error) {
+            console.error('Error loading documents:', error);
+            document.getElementById('documents-table').innerHTML = `
+                <tr>
+                    <td colspan="6" class="px-6 py-12 text-center text-red-500">
+                        <i class="fas fa-exclamation-circle text-2xl mb-2"></i>
+                        <p>Error loading documents</p>
+                    </td>
+                </tr>
+            `;
+        }
+    }
+    
+    function renderDocuments(documents) {
+        const tbody = document.getElementById('documents-table');
+        
+        if (documents.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="6" class="px-6 py-12 text-center text-gray-500">
+                        <i class="fas fa-inbox text-3xl mb-2"></i>
+                        <p>No documents found. <a href="/upload" class="text-indigo-600 hover:underline">Upload your first document</a></p>
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+        
+        tbody.innerHTML = documents.map(doc => `
+            <tr class="hover:bg-gray-50 transition">
+                <td class="px-6 py-4 whitespace-nowrap">
+                    <div class="flex items-center">
+                        <i class="fas fa-file-alt text-gray-400 mr-3"></i>
+                        <span class="text-sm font-medium text-gray-900">${doc.filename}</span>
+                    </div>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                    <span class="text-sm text-gray-600">${doc.document_type || 'Unknown'}</span>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                    <span class="status-badge status-${doc.status}">${doc.status}</span>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                    ${new Date(doc.upload_timestamp).toLocaleString()}
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                    ${doc.ocr_confidence ? `
+                        <div class="flex items-center">
+                            <div class="w-full bg-gray-200 rounded-full h-2 mr-2">
+                                <div class="bg-green-600 h-2 rounded-full" style="width: ${doc.ocr_confidence}%"></div>
+                            </div>
+                            <span class="text-sm text-gray-600">${doc.ocr_confidence.toFixed(1)}%</span>
+                        </div>
+                    ` : '<span class="text-sm text-gray-400">N/A</span>'}
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm">
+                    <a href="/documents/${doc.id}" class="text-indigo-600 hover:text-indigo-900 mr-3">
+                        <i class="fas fa-eye"></i> View
+                    </a>
+                    <button onclick="deleteDocument('${doc.id}')" class="text-red-600 hover:text-red-900">
+                        <i class="fas fa-trash"></i> Delete
+                    </button>
+                </td>
+            </tr>
+        `).join('');
+    }
+    
+    function applyFilters() {
+        const search = document.getElementById('search-input').value.toLowerCase();
+        const status = document.getElementById('status-filter').value;
+        const type = document.getElementById('type-filter').value;
+        
+        let filtered = allDocuments;
+        
+        if (search) {
+            filtered = filtered.filter(doc => doc.filename.toLowerCase().includes(search));
+        }
+        
+        if (status) {
+            filtered = filtered.filter(doc => doc.status === status);
+        }
+        
+        if (type) {
+            filtered = filtered.filter(doc => doc.document_type === type);
+        }
+        
+        renderDocuments(filtered);
+    }
+    
+    async function deleteDocument(id) {
+        if (!confirm('Are you sure you want to delete this document?')) {
+            return;
+        }
+        
+        try {
+            const response = await fetch(`/api/v1/documents/${id}`, {
+                method: 'DELETE'
+            });
+            
+            if (response.ok) {
+                alert('Document deleted successfully');
+                loadDocuments();
+            } else {
+                alert('Error deleting document');
+            }
+        } catch (error) {
+            console.error('Error deleting document:', error);
+            alert('Error deleting document');
+        }
+    }
+    
+    // Load documents on page load
+    loadDocuments();
+    
+    // Auto-refresh every 10 seconds
+    setInterval(loadDocuments, 10000);
+    
+    // Real-time search
+    document.getElementById('search-input').addEventListener('input', applyFilters);
+</script>
+
+
+</body></html>

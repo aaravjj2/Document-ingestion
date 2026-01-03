@@ -1,0 +1,161 @@
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:14-alpine
+    container_name: doc_ingestion_postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: document_ingestion
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./docker/init.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - doc_ingestion_network
+
+  # Redis for Celery
+  redis:
+    image: redis:7-alpine
+    container_name: doc_ingestion_redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - doc_ingestion_network
+
+  # FastAPI Application
+  api:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    container_name: doc_ingestion_api
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/document_ingestion
+      - REDIS_URL=redis://redis:6379/0
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+      - UPLOAD_DIR=/app/temp
+      - DEBUG=false
+      - PADDLE_PDX_EAGER_INIT=0
+      - PADDLE_PDX_DISABLE_MODEL_SOURCE_CHECK=True
+    ports:
+      - "8001:8000"
+    volumes:
+      - upload_data:/app/temp
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8000/api/v1/dashboard/health" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - doc_ingestion_network
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  # Celery Worker
+  worker:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.worker
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/document_ingestion
+      - REDIS_URL=redis://redis:6379/0
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+      - UPLOAD_DIR=/app/temp
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - USE_LOCAL_LLM=${USE_LOCAL_LLM:-false}
+      - PADDLE_PDX_EAGER_INIT=0
+      - PADDLE_PDX_DISABLE_MODEL_SOURCE_CHECK=True
+      - OCR_CONFIDENCE_THRESHOLD=${OCR_CONFIDENCE_THRESHOLD:-0.6}
+    volumes:
+      - upload_data:/app/temp
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: celery -A src.workers.celery_app worker --loglevel=info --concurrency=2 -Q document_processing,default
+    deploy:
+      replicas: 2
+    networks:
+      - doc_ingestion_network
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  # Celery Beat (Scheduler)
+  beat:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.worker
+    container_name: doc_ingestion_beat
+    command: celery -A src.workers.celery_app beat --loglevel=info -Q document_processing,default
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/document_ingestion
+      - REDIS_URL=redis://redis:6379/0
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+    depends_on:
+      - redis
+      - worker
+    networks:
+      - doc_ingestion_network
+
+  # Flower (Celery Monitoring)
+  flower:
+    image: mher/flower:0.9.7
+    container_name: doc_ingestion_flower
+    environment:
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - FLOWER_PORT=5555
+    ports:
+      - "5555:5555"
+    depends_on:
+      - redis
+      - worker
+    networks:
+      - doc_ingestion_network
+
+  # Streamlit Dashboard
+  dashboard:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    container_name: doc_ingestion_dashboard
+    command: streamlit run dashboard/app.py --server.port=8501 --server.address=0.0.0.0
+    environment:
+      - API_BASE_URL=http://api:8000/api/v1
+    ports:
+      - "8000:8501"
+    depends_on:
+      - api
+    networks:
+      - doc_ingestion_network
+
+volumes:
+  postgres_data:
+  redis_data:
+  upload_data:
+
+
+networks:
+  doc_ingestion_network:
+    driver: bridge

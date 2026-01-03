@@ -1,0 +1,268 @@
+{% extends "base.html" %}
+
+{% block title %}System Health - Document Ingestion{% endblock %}
+
+{% block content %}
+<div class="mb-8">
+    <h1 class="text-3xl font-bold text-gray-800 mb-2">System Health</h1>
+    <p class="text-gray-600">Monitor service status and worker health</p>
+</div>
+
+<!-- Overall Status -->
+<div class="card mb-6 border-l-4" id="overall-status">
+    <div class="flex items-center justify-between">
+        <div class="flex items-center space-x-4">
+            <div id="status-icon" class="text-5xl"></div>
+            <div>
+                <h2 class="text-2xl font-bold" id="status-text">Checking...</h2>
+                <p class="text-gray-600">Overall system status</p>
+            </div>
+        </div>
+        <button onclick="refreshHealth()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg font-medium transition">
+            <i class="fas fa-sync-alt mr-2"></i>Refresh
+        </button>
+    </div>
+</div>
+
+<!-- Component Status Grid -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+    <!-- Database Status -->
+    <div class="card" id="db-status">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-semibold text-gray-800">
+                <i class="fas fa-database mr-2"></i>Database
+            </h3>
+            <span id="db-badge" class="status-badge">Checking...</span>
+        </div>
+        <div id="db-details" class="text-sm text-gray-600">
+            <p>Connection status: <span id="db-connection">-</span></p>
+        </div>
+    </div>
+    
+    <!-- Celery Status -->
+    <div class="card" id="celery-status">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-semibold text-gray-800">
+                <i class="fas fa-cogs mr-2"></i>Celery
+            </h3>
+            <span id="celery-badge" class="status-badge">Checking...</span>
+        </div>
+        <div id="celery-details" class="text-sm text-gray-600">
+            <p>Queue status: <span id="celery-connection">-</span></p>
+        </div>
+    </div>
+    
+    <!-- Workers Status -->
+    <div class="card" id="workers-status">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-semibold text-gray-800">
+                <i class="fas fa-users mr-2"></i>Workers
+            </h3>
+            <span id="workers-badge" class="status-badge">Checking...</span>
+        </div>
+        <div id="workers-details" class="text-sm text-gray-600">
+            <p>Active workers: <span id="workers-count">-</span></p>
+        </div>
+    </div>
+</div>
+
+<!-- Workers List -->
+<div class="card">
+    <h3 class="text-lg font-semibold text-gray-800 mb-4">
+        <i class="fas fa-server mr-2"></i>Active Workers
+    </h3>
+    <div id="workers-list" class="space-y-3">
+        <div class="text-center py-8 text-gray-500">
+            <i class="fas fa-spinner fa-spin text-2xl mb-2"></i>
+            <p>Loading worker information...</p>
+        </div>
+    </div>
+</div>
+
+<!-- System Metrics -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+    <div class="card">
+        <h3 class="text-lg font-semibold text-gray-800 mb-4">
+            <i class="fas fa-chart-line mr-2"></i>Processing Stats (Last 24h)
+        </h3>
+        <div class="space-y-3">
+            <div class="flex justify-between items-center p-3 bg-gray-50 rounded">
+                <span class="text-gray-700">Documents Processed</span>
+                <span id="stats-processed" class="font-bold text-gray-800">-</span>
+            </div>
+            <div class="flex justify-between items-center p-3 bg-gray-50 rounded">
+                <span class="text-gray-700">Success Rate</span>
+                <span id="stats-success" class="font-bold text-green-600">-</span>
+            </div>
+            <div class="flex justify-between items-center p-3 bg-gray-50 rounded">
+                <span class="text-gray-700">Average Processing Time</span>
+                <span id="stats-avg-time" class="font-bold text-gray-800">-</span>
+            </div>
+        </div>
+    </div>
+    
+    <div class="card">
+        <h3 class="text-lg font-semibold text-gray-800 mb-4">
+            <i class="fas fa-info-circle mr-2"></i>Service Information
+        </h3>
+        <div class="space-y-3 text-sm">
+            <div class="flex justify-between p-3 bg-gray-50 rounded">
+                <span class="text-gray-700">API Version</span>
+                <span class="font-medium">v1</span>
+            </div>
+            <div class="flex justify-between p-3 bg-gray-50 rounded">
+                <span class="text-gray-700">OCR Engine</span>
+                <span class="font-medium">PaddleOCR</span>
+            </div>
+            <div class="flex justify-between p-3 bg-gray-50 rounded">
+                <span class="text-gray-700">Storage Backend</span>
+                <span class="font-medium">PostgreSQL</span>
+            </div>
+            <div class="flex justify-between p-3 bg-gray-50 rounded">
+                <span class="text-gray-700">Queue Backend</span>
+                <span class="font-medium">Redis</span>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    async function loadHealthStatus() {
+        try {
+            const response = await fetch('/api/v1/dashboard/health');
+            const health = await response.json();
+            
+            // Update overall status
+            const overallStatus = document.getElementById('overall-status');
+            const statusIcon = document.getElementById('status-icon');
+            const statusText = document.getElementById('status-text');
+            
+            if (health.status === 'healthy') {
+                overallStatus.classList.add('border-green-500');
+                statusIcon.innerHTML = '<i class="fas fa-check-circle text-green-500"></i>';
+                statusText.textContent = 'All Systems Operational';
+                statusText.classList.add('text-green-600');
+            } else {
+                overallStatus.classList.add('border-red-500');
+                statusIcon.innerHTML = '<i class="fas fa-exclamation-circle text-red-500"></i>';
+                statusText.textContent = 'System Issues Detected';
+                statusText.classList.add('text-red-600');
+            }
+            
+            // Update component statuses
+            updateComponentStatus('db', health.components.database);
+            updateComponentStatus('celery', health.components.celery);
+            
+            // Update workers
+            const workersCount = health.components.workers?.length || 0;
+            document.getElementById('workers-count').textContent = workersCount;
+            
+            const workersBadge = document.getElementById('workers-badge');
+            if (workersCount > 0) {
+                workersBadge.textContent = 'Healthy';
+                workersBadge.className = 'status-badge status-completed';
+            } else {
+                workersBadge.textContent = 'No Workers';
+                workersBadge.className = 'status-badge status-failed';
+            }
+            
+            // List workers
+            const workersList = document.getElementById('workers-list');
+            if (workersCount > 0) {
+                workersList.innerHTML = health.components.workers.map(worker => `
+                    <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                        <div class="flex items-center space-x-3">
+                            <i class="fas fa-server text-2xl text-green-500"></i>
+                            <div>
+                                <p class="font-medium text-gray-800">${worker}</p>
+                                <p class="text-sm text-gray-500">Status: Active</p>
+                            </div>
+                        </div>
+                        <span class="status-badge status-completed">Online</span>
+                    </div>
+                `).join('');
+            } else {
+                workersList.innerHTML = `
+                    <div class="text-center py-8 text-gray-500">
+                        <i class="fas fa-server text-3xl mb-2 text-gray-400"></i>
+                        <p>No active workers found</p>
+                    </div>
+                `;
+            }
+            
+            // Load stats
+            await loadStats();
+            
+        } catch (error) {
+            console.error('Error loading health status:', error);
+            const overallStatus = document.getElementById('overall-status');
+            overallStatus.classList.add('border-red-500');
+            document.getElementById('status-icon').innerHTML = '<i class="fas fa-times-circle text-red-500"></i>';
+            document.getElementById('status-text').textContent = 'Unable to Connect';
+        }
+    }
+    
+    function updateComponentStatus(component, status) {
+        const badge = document.getElementById(`${component}-badge`);
+        const connection = document.getElementById(`${component}-connection`);
+        
+        if (status === 'healthy') {
+            badge.textContent = 'Healthy';
+            badge.className = 'status-badge status-completed';
+            connection.textContent = 'Connected';
+        } else {
+            badge.textContent = 'Unhealthy';
+            badge.className = 'status-badge status-failed';
+            connection.textContent = 'Disconnected';
+        }
+    }
+    
+    async function loadStats() {
+        try {
+            const response = await fetch('/api/v1/documents');
+            const data = await response.json();
+            
+            const completed = data.documents.filter(d => d.status === 'completed');
+            const processedCount = completed.length;
+            const totalCount = data.documents.length;
+            const successRate = totalCount > 0 ? ((processedCount / totalCount) * 100).toFixed(1) : '0';
+            
+            // Calculate average processing time
+            let avgTime = 'N/A';
+            if (completed.length > 0) {
+                const times = completed
+                    .filter(d => d.processing_started_at && d.processing_completed_at)
+                    .map(d => {
+                        const start = new Date(d.processing_started_at);
+                        const end = new Date(d.processing_completed_at);
+                        return (end - start) / 1000; // seconds
+                    });
+                
+                if (times.length > 0) {
+                    const avg = times.reduce((a, b) => a + b, 0) / times.length;
+                    avgTime = `${avg.toFixed(1)}s`;
+                }
+            }
+            
+            document.getElementById('stats-processed').textContent = processedCount;
+            document.getElementById('stats-success').textContent = `${successRate}%`;
+            document.getElementById('stats-avg-time').textContent = avgTime;
+            
+        } catch (error) {
+            console.error('Error loading stats:', error);
+        }
+    }
+    
+    function refreshHealth() {
+        loadHealthStatus();
+    }
+    
+    // Load on page load
+    loadHealthStatus();
+    
+    // Auto-refresh every 10 seconds
+    setInterval(loadHealthStatus, 10000);
+</script>
+{% endblock %}
