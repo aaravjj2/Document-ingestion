@@ -178,6 +178,7 @@ st.sidebar.title("📄 Document Ingestion")
 st.sidebar.markdown("---")
 
 # Navigation
+page = st.sidebar.radio(
     "Navigation",
     ["📊 Dashboard", "📈 Analytics", "📤 Upload", "📋 Documents", "🔍 Search", "👁️ Review Station"],
 )
