@@ -692,6 +692,69 @@ class OCRService:
         
         return unique
 
+    def _extract_mrz_zone(self, image: NDArray[np.uint8], doc_type: str | None = None) -> str | None:
+        """
+        Extract and parse MRZ (Machine Readable Zone) from passport/ID images.
+        
+        For passport documents, crops the bottom 20% and uses specialized
+        preprocessing for OCR-B font recognition.
+        
+        Args:
+            image: Input image
+            doc_type: Document type from classification (e.g., "passport")
+            
+        Returns:
+            Parsed MRZ text if successful, None otherwise
+        """
+        # Only apply for passport-type documents
+        if doc_type and doc_type.lower() not in ["passport", "travel_document", "id_card"]:
+            return None
+        
+        try:
+            h, w = image.shape[:2]
+            
+            # Crop bottom 20% for MRZ zone (typical passport layout)
+            mrz_region = image[int(h * 0.80):, :]
+            
+            # Preprocess for OCR-B font (MRZ standard font)
+            if len(mrz_region.shape) == 3:
+                gray = cv2.cvtColor(mrz_region, cv2.COLOR_BGR2GRAY)
+            else:
+                gray = mrz_region.copy()
+            
+            # Apply Otsu's thresholding for optimal binary threshold
+            _, binary = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+            
+            # Convert back to BGR for PaddleOCR
+            binary_bgr = cv2.cvtColor(binary, cv2.COLOR_GRAY2BGR)
+            
+            # Run OCR on MRZ region
+            result = self.ocr.ocr(binary_bgr, cls=True)
+            
+            if not result or not result[0]:
+                return None
+            
+            # Combine detected lines
+            mrz_lines = []
+            for line in result[0]:
+                text = line[1][0] if line[1] else ""
+                # MRZ characters are uppercase with < as filler
+                cleaned = text.upper().replace(" ", "<")
+                # MRZ lines are typically 30+ chars for passports (TD3), 30 chars for ID (TD1)
+                if len(cleaned) >= 28:
+                    mrz_lines.append(cleaned)
+            
+            if len(mrz_lines) >= 2:
+                mrz_text = "\n".join(mrz_lines[:2])
+                logger.info(f"Extracted MRZ: {mrz_text[:40]}...")
+                return mrz_text
+            
+            return None
+            
+        except Exception as e:
+            logger.debug(f"MRZ extraction failed: {e}")
+            return None
+
 
     def process_image(
         self,

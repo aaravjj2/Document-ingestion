@@ -43,6 +43,7 @@ class ImagePreprocessor:
         apply_denoise: bool = True,
         apply_binarize: bool = True,
         apply_deskew: bool = True,
+        apply_shadow_removal: bool = False,
     ) -> NDArray[np.uint8]:
         """
         Apply the full preprocessing pipeline to an image.
@@ -53,6 +54,7 @@ class ImagePreprocessor:
             apply_denoise: Apply denoising filter
             apply_binarize: Apply adaptive thresholding
             apply_deskew: Correct image rotation
+            apply_shadow_removal: Remove shadows from mobile photos
             
         Returns:
             Preprocessed image as numpy array
@@ -63,6 +65,11 @@ class ImagePreprocessor:
         if apply_grayscale and len(processed.shape) == 3:
             processed = self.to_grayscale(processed)
             logger.debug("Applied grayscale conversion")
+
+        # Step 1.5: Remove shadows (for mobile photos with uneven lighting)
+        if apply_shadow_removal:
+            processed = self.remove_shadows(processed)
+            logger.debug("Applied shadow removal")
 
         # Step 2: Denoise
         if apply_denoise:
@@ -303,6 +310,42 @@ class ImagePreprocessor:
             # Apply CLAHE directly for grayscale
             clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
             return clahe.apply(image)
+
+    def remove_shadows(self, image: NDArray[np.uint8]) -> NDArray[np.uint8]:
+        """
+        Remove shadows from mobile photos using morphological background normalization.
+        
+        Uses morphological dilation to estimate the background and divides by it,
+        which effectively removes uneven lighting and hand shadows common in 
+        mobile photos of documents.
+        
+        Args:
+            image: Input image (grayscale or BGR)
+            
+        Returns:
+            Shadow-corrected image
+        """
+        # Ensure grayscale for processing
+        if len(image.shape) == 3:
+            gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        else:
+            gray = image.copy()
+        
+        # Use morphological dilation to estimate background
+        # Larger kernel = better at removing larger shadows
+        kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (25, 25))
+        bg = cv2.morphologyEx(gray, cv2.MORPH_DILATE, kernel)
+        
+        # Divide image by background estimate to normalize
+        # scale=255 ensures output is in 0-255 range
+        result = cv2.divide(gray, bg, scale=255)
+        
+        # If original was color, convert result back to BGR
+        if len(image.shape) == 3:
+            result = cv2.cvtColor(result, cv2.COLOR_GRAY2BGR)
+        
+        logger.info("Applied shadow removal using morphological background normalization")
+        return result
 
     @staticmethod
     def load_image(file_path: str | Path) -> NDArray[np.uint8]:

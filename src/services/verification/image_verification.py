@@ -70,8 +70,20 @@ class ImageReconstructionService:
         scale = 3
         s_width, s_height = width * scale, height * scale
         
-        # Create PIL image for text rendering (RGBA for transparency)
-        img = Image.new("RGBA", (s_width, s_height), background_color + (255,))
+        # Smart Ghosting: Use faded original as background for alignment verification
+        if original_image is not None:
+            # Convert original to PIL and resize to super-sampled size
+            orig_pil = Image.fromarray(cv2.cvtColor(original_image, cv2.COLOR_BGR2RGB))
+            base_image = orig_pil.resize((s_width, s_height), Image.Resampling.LANCZOS)
+            base_image = base_image.convert("RGBA")
+            # Apply transparency (ghosted effect)
+            base_image.putalpha(110)
+            # Create final canvas with white background + ghosted overlay
+            img = Image.new("RGBA", (s_width, s_height), (255, 255, 255, 255))
+            img.alpha_composite(base_image)
+        else:
+            # Fallback to plain background
+            img = Image.new("RGBA", (s_width, s_height), background_color + (255,))
         draw = ImageDraw.Draw(img)
         
         # --- Spatial NMS with Proximity Awareness ---
@@ -257,26 +269,9 @@ class ImageReconstructionService:
         
         detections_drawing_order = non_watermark_detections
         
-        # --- Improved Font Sizing (Enhanced Clarity) ---
-        all_heights = []
-        for det in detections_drawing_order:
-             bbox = det.get("bounding_box") or det.get("box")
-             if isinstance(bbox, list) and len(bbox) >= 4:
-                ys = [p[1] for p in bbox]
-                h = (max(ys) - min(ys)) * scale # scale is 3
-                if h > 5: all_heights.append(h)
-        
-        if all_heights:
-            median_h = sorted(all_heights)[len(all_heights)//2]
-            # Increased from 70% to 75% for better clarity
-            global_font_size = int(median_h * 0.75)
-            if global_font_size < 12: global_font_size = 12  # Minimum readable size
-        else:
-            global_font_size = 28 # Slightly larger fallback
-            
-        # Pre-load the fonts at this fixed size
-        font_regular = self._get_font(global_font_size, is_bold=False)
-        font_bold = self._get_font(global_font_size, is_bold=True)
+        # --- Dynamic Per-Box Font Sizing ---
+        # Font size is calculated individually for each text box based on its height
+        # This ensures headers get large fonts and labels get small fonts
         
         for det in detections_drawing_order:
             text = det.get("text", "")
@@ -345,30 +340,29 @@ class ImageReconstructionService:
                 elif det_area > (15000 * scale * scale):
                     alpha = 255
                     
-                # 3. Render Text with UNIFORM SIZE (Target)
-                # target_size = global_font_size
-                # BUT: Must ensure it fits horizontally to avoid overlap (Safety Shrink)
+                # 3. DYNAMIC PER-BOX FONT SIZING
+                # Calculate font size based on THIS box's height (not global median)
+                box_height = s_box_h  # Already scaled
+                font_size = int(box_height * 0.8)  # 80% of box height
+                if font_size < 10:
+                    font_size = 10  # Minimum readable size
+                if font_size > 200:
+                    font_size = 200  # Sanity cap for huge boxes
                 
-                safety_size = global_font_size
-                safety_font = font_bold if is_bold else font_regular
+                # Load font for this specific size
+                current_font = self._get_font(font_size, is_bold)
                 
+                # Width Fitting: Shrink font if text overflows box width
                 if is_vertical:
-                     # For vertical, width checks apply to the rotated dimensions (height of unrotated)
-                     # box_h is the constraint for text width
-                     # Logic is same, just dimensions swapped.
-                     # Simplify: just ensure text width < s_box_h (rotated width)
-                     constraint = s_box_h
+                    constraint = s_box_h  # For vertical text, height is the "width"
                 else:
-                     constraint = s_box_w
+                    constraint = s_box_w
                 
-                # Check width and shrink if needed
-                text_len = draw.textlength(text, font=safety_font)
-                while text_len > constraint * 0.92 and safety_size > 8: # Improved spacing (92% from 95%)
-                    safety_size -= 1
-                    safety_font = self._get_font(safety_size, is_bold)
-                    text_len = draw.textlength(text, font=safety_font)
-                
-                current_font = safety_font
+                text_len = draw.textlength(text, font=current_font)
+                while text_len > constraint * 0.95 and font_size > 8:
+                    font_size -= 1
+                    current_font = self._get_font(font_size, is_bold)
+                    text_len = draw.textlength(text, font=current_font)
                 
                 if is_vertical:
                     # Create temporary image for text
