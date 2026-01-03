@@ -70,15 +70,17 @@ class ImageReconstructionService:
         scale = 3
         s_width, s_height = width * scale, height * scale
         
-        # Smart Ghosting: Use faded original as background for alignment verification
+        # Smart Ghosting: Use VERY FADED original as background for alignment verification
+        # The reconstruction is primarily OCR TEXT - the ghost is just a subtle alignment guide
         if original_image is not None:
             # Convert original to PIL and resize to super-sampled size
             orig_pil = Image.fromarray(cv2.cvtColor(original_image, cv2.COLOR_BGR2RGB))
             base_image = orig_pil.resize((s_width, s_height), Image.Resampling.LANCZOS)
             base_image = base_image.convert("RGBA")
-            # Apply transparency (ghosted effect)
-            base_image.putalpha(110)
-            # Create final canvas with white background + ghosted overlay
+            # Apply VERY LOW transparency (alpha=40) - ghost is barely visible
+            # This ensures OCR text is clearly the primary content, not the original image
+            base_image.putalpha(40)
+            # Create final canvas with white background + very faint ghosted overlay
             img = Image.new("RGBA", (s_width, s_height), (255, 255, 255, 255))
             img.alpha_composite(base_image)
         else:
